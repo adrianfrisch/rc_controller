@@ -1,4 +1,5 @@
 #include <RingBuf.h>
+#include <RF24.h>
 
 // Pins for the potis of the 2 joysticks
 #define AXIS1_X_PIN A1
@@ -14,6 +15,13 @@
 #define BUTTON_3 20
 #define BUTTON_4 21
 
+// Connectors for the NRF24L01
+#define NRF_MISO 50 
+#define NRF_MOSI 51
+#define NRF_SS 52 
+#define NRF_SCK 53
+#define NRF_CE 
+#define NRF_CSN
 // Size of the ringbuffer which will be used for a running average to smooth out
 // the jittering of the joystick knobs. 
 #define BUFFER_SIZE 3
@@ -40,6 +48,9 @@ byte b2 = 0;
 byte b3 = 0;
 byte b4 = 0;
 
+RF24 radio(NRF_CE,NRF_CSN);
+const byte address[6] = "00001";
+
 void setup(){
     Serial.begin(9600);
     pinMode(BUTTON_1,INPUT_PULLUP);
@@ -59,7 +70,12 @@ void setup(){
         y2.push(0);
         z2.push(0);
     }
-}
+    
+    radio.begin();
+    radio.openWritingPipe(address);
+    radio.setPALevel(RF24_PA_MAX);
+    
+}   
 
 int average(RingBuf* buff){
     long sum = 0;
