@@ -4,7 +4,7 @@ For my RC and robotics projects, I needed a better way to remote control my devi
 So this is my attempt on building a handheld remote control, which I can use on any of 
 my current and future projects.
 
-![CAD design screenshot](./images/cad_design.png)
+![CAD design screenshot](https://githubcom/adrianfrisch/rc_controller/images/cad_design.png)
 ## Goals
 The new controller should have two operation modes. Since I used the App "Bluetooth RC Controller" 
 in the past for a project, It should have a bluetooth operation mode which operates similar and can be used 
