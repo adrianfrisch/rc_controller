@@ -5,9 +5,9 @@
 #define AXIS1_X_PIN A1
 #define AXIS1_Y_PIN A2
 #define AXIS1_Z_PIN A3
-#define AXIS2_X_PIN A1
-#define AXIS2_Y_PIN A2
-#define AXIS2_Z_PIN A3
+#define AXIS2_X_PIN A4
+#define AXIS2_Y_PIN A5
+#define AXIS2_Z_PIN A6
 
 // Using interrupt capable digital pins for the 4 pushbuttons
 #define BUTTON_1 18
@@ -20,8 +20,8 @@
 #define NRF_MOSI 51
 #define NRF_SS 52 
 #define NRF_SCK 53
-#define NRF_CE 
-#define NRF_CSN
+#define NRF_CE 7
+#define NRF_CSN 8
 // Size of the ringbuffer which will be used for a running average to smooth out
 // the jittering of the joystick knobs. 
 #define BUFFER_SIZE 3
