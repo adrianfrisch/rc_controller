@@ -1,5 +1,6 @@
 #include <RingBuf.h>
 #include <RF24.h>
+#include <LiquidCrystal.h>
 
 // Pins for the potis of the 2 joysticks
 #define AXIS1_X_PIN A1
@@ -48,6 +49,10 @@ byte b2 = 0;
 byte b3 = 0;
 byte b4 = 0;
 
+// Using 8 PIN Mode since faster
+// LCD object. Parameters: (rs, enable, d0, d1, d2, d3, d4, d5, d6, d7)
+LiquidCrystal lcd(13, 12, 8,9,10,11,4, 5, 6, 7);
+
 RF24 radio(NRF_CE,NRF_CSN);
 const byte address[6] = "00001";
 
@@ -74,23 +79,33 @@ void setup(){
     radio.begin();
     radio.openWritingPipe(address);
     radio.setPALevel(RF24_PA_MAX);
-    
+    lcd.begin(16, 2);
+    lcd.clear();
 }   
 
-int average(RingBuf* buff){
+int average(RingBuf<int,BUFFER_SIZE> *buff){
     long sum = 0;
-    for (int i=0 ; i<BUFFER_SIZE ; i++)
-        sum += buff[i];    
+    for (int i=0 ; i<BUFFER_SIZE ; i++){        
+        int val = buff->operator[](i);
+        sum += val;    
+    }
     return sum/BUFFER_SIZE;
 }
 
+int removed;
 void loop(){
+    lcd.setCursor(0,0);
+    lcd.print("Universal Remote");
+    lcd.setCursor(0, 1);
+    // Print a message to the LCD.
+    lcd.print("LCD Check");
+    
     axis1_x = analogRead(AXIS1_X_PIN);
     axis1_y = analogRead(AXIS1_Y_PIN);
     axis1_z = analogRead(AXIS1_Z_PIN);
-    x1.pop();
-    y1.pop();
-    z1.pop();
+    x1.pop(removed);
+    y1.pop(removed);
+    z1.pop(removed);
     x1.push(axis1_x);
     y1.push(axis1_y);
     z1.push(axis1_z);
@@ -98,23 +113,23 @@ void loop(){
     axis2_x = analogRead(AXIS2_X_PIN);
     axis2_y = analogRead(AXIS2_Y_PIN);
     axis2_z = analogRead(AXIS2_Z_PIN);
-    x2.pop();
-    y2.pop();
-    z2.pop();
+    x2.pop(removed);
+    y2.pop(removed);
+    z2.pop(removed);
     x2.push(axis2_x);
     y2.push(axis2_y);
     z2.push(axis2_z);
     
-    Serial.print(average(x1);Serial.print(',');
-    Serial.print(average(y1);Serial.print(',');
-    Serial.print(average(z1);Serial.print(',');
-    Serial.print(average(x2);Serial.print(',');
-    Serial.print(average(y2);Serial.print(',');
-    Serial.print(average(z2);Serial.print(',');
-    Serial.print(average(b1);Serial.print(',');
-    Serial.print(average(b2);Serial.print(',');
-    Serial.print(average(b3);Serial.print(',');
-    Serial.print(average(b4);Serial.print('\n');
+    Serial.print(average(&x1));Serial.print(',');
+    Serial.print(average(&y1));Serial.print(',');
+    Serial.print(average(&z1));Serial.print(',');
+    Serial.print(average(&x2));Serial.print(',');
+    Serial.print(average(&y2));Serial.print(',');
+    Serial.print(average(&z2));Serial.print(',');
+    Serial.print(b1);Serial.print(',');
+    Serial.print(b2);Serial.print(',');
+    Serial.print(b3);Serial.print(',');
+    Serial.print(b4);Serial.print('\n');
     
 }
 
