@@ -1,6 +1,8 @@
 #include <RingBuf.h>
 #include <RF24.h>
 #include <LiquidCrystal.h>
+// Keep in Mind: Bluetooth modules need pairing before they send / receive data.
+#include <ArduinoBlue.h>
 
 // Pins for the potis of the 2 joysticks
 #define AXIS1_X_PIN A1
@@ -21,8 +23,21 @@
 #define NRF_MOSI 51
 #define NRF_SS 52 
 #define NRF_SCK 53
-#define NRF_CE 7
-#define NRF_CSN 8
+#define NRF_CE 2
+#define NRF_CSN 3
+
+// Connectors for the LCD Display
+#define LCD_RS 13
+#define LCD_ENABLE 12
+#define LCD_D0 8
+#define LCD_D1 9
+#define LCD_D2 10
+#define LCD_D3 11
+#define LCD_D4 4
+#define LCD_D5 5
+#define LCD_D6 6
+#define LCD_D7 7
+
 // Size of the ringbuffer which will be used for a running average to smooth out
 // the jittering of the joystick knobs. 
 #define BUFFER_SIZE 3
@@ -50,14 +65,15 @@ byte b3 = 0;
 byte b4 = 0;
 
 // Using 8 PIN Mode since faster
-// LCD object. Parameters: (rs, enable, d0, d1, d2, d3, d4, d5, d6, d7)
-LiquidCrystal lcd(13, 12, 8,9,10,11,4, 5, 6, 7);
+LiquidCrystal lcd(LCD_RS, LCD_ENABLE, LCD_D0, LCD_D1, LCD_D2, LCD_D3, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
 RF24 radio(NRF_CE,NRF_CSN);
 const byte address[6] = "00001";
 
 void setup(){
     Serial.begin(9600);
+    // Bluetooth Serial on Serial2
+    Serial2.begin(9600);
     pinMode(BUTTON_1,INPUT_PULLUP);
     pinMode(BUTTON_2,INPUT_PULLUP);
     pinMode(BUTTON_3,INPUT_PULLUP);
