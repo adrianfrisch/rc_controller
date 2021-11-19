@@ -37,6 +37,9 @@ This list contains all of the used components to put everything together
 - 1x HD44780 1602 LCD Module
 - 1x NRF24L01 2.4GHz Transceiver
 - 1x HC05 Bluetooth Transceiver
+- 1x 220Ohms resistor
+- 1x 10kOhms linear potentiometer
+- 2x 10kOhms resistor
 - 1x Power Switch
 - 4x Push Buttons
 - 2x 4-Axis joystick potentiometer
@@ -53,8 +56,10 @@ This list contains all of the used components to put everything together
 - 2x display connector
 *Screws, nuts etc.*
 - 10x M2 Screws 6mm
-- ?x 2x8mm screws
-- ?x 3x8mm screws
+- 12x 3x10mm screws
+- 2x M4 Screws 12mm
+- 4x M4 Washers
+- 2x M4 Nuts
 - hot glue
 - CA glue
 - heat shrink tube
