@@ -38,6 +38,7 @@ This list contains all of the used components to put everything together
 - 1x NRF24L01 2.4GHz Transceiver
 - 1x HC05 Bluetooth Transceiver
 - 1x 220Ohms resistor
+- 1x 10-100uF capacitor
 - 1x 10kOhms linear potentiometer
 - 2x 10kOhms resistor
 - 1x Power Switch
