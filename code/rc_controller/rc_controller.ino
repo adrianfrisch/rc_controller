@@ -4,6 +4,9 @@
 // Keep in Mind: Bluetooth modules need pairing before they send / receive data.
 #include <ArduinoBlue.h>
 
+// Pin for battery monitoring
+#define BATTERY_STATUS_PIN A0
+
 // Pins for the potis of the 2 joysticks
 #define AXIS1_X_PIN A1
 #define AXIS1_Y_PIN A2
