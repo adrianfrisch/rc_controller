@@ -6,17 +6,20 @@
 // Keep in Mind: Bluetooth modules need pairing before they send / receive data.
 #include <ArduinoBlue.h>
 
+#define DEBUG false
 // Pin for battery monitoring
 #define BATTERY_STATUS_PIN A0
 
 // Pins for the potis of the 2 joysticks
-#define AXIS1_X_PIN A1
-#define AXIS1_Y_PIN A2
-#define AXIS1_Z_PIN A3
-#define AXIS2_X_PIN A4
-#define AXIS2_Y_PIN A5
-#define AXIS2_Z_PIN A6
+#define AXIS1_X_PIN A4
+#define AXIS1_Y_PIN A5
+#define AXIS1_Z_PIN A6
+#define AXIS2_X_PIN A3
+#define AXIS2_Y_PIN A2
+#define AXIS2_Z_PIN A1
 
+// Threshold for interrupt handling of button presses to avoid multiple triggers
+#define BUTTON_THRESHOLD 200
 // Using interrupt capable digital pins for the 4 pushbuttons
 #define BUTTON_1 19
 #define BUTTON_2 20
@@ -72,7 +75,8 @@ byte b4 = 0;
 LiquidCrystal lcd(LCD_RS, LCD_ENABLE, LCD_D0, LCD_D1, LCD_D2, LCD_D3, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
 RF24 radio(NRF_CE,NRF_CSN);
-const byte address[6] = "00001";
+const byte address[5] = {'0','0','0','0','1'};
+byte dataToSend[16];
 
 #define MODE_SETUP 0
 #define MODE_BT 1
@@ -81,7 +85,7 @@ const byte address[6] = "00001";
 int mode = MODE_SETUP;
 int cursorPosition = 0;
 int removed;
-
+long lastButtonPressDetected;
 void modeSelection() {
     lcd.setCursor(2,0);
     lcd.print("Bluetooth Mode");
@@ -137,10 +141,10 @@ void setup(){
     lcd.clear();
     modeSelection();
     Serial.println(radio.begin());
+    radio.begin();
+    radio.setDataRate( RF24_250KBPS );
+    radio.setRetries(3,5);
     radio.openWritingPipe(address);
-    radio.setPALevel(RF24_PA_MIN);
-    radio.stopListening();
-    
 }   
 
 int average(RingBuf<int,BUFFER_SIZE> *buff){
@@ -154,13 +158,22 @@ int average(RingBuf<int,BUFFER_SIZE> *buff){
 void readAllAnalogPositions() {
     axis1_x = analogRead(AXIS1_X_PIN);
     lcd.setCursor(0, 1);
-    lcd.print(axis1_x);
+    lcd.print(map(axis1_x,0,1024,0,99));
     axis1_y = analogRead(AXIS1_Y_PIN);
-    lcd.setCursor(5,1);
-    lcd.print(axis1_y);
+    lcd.setCursor(3,1);
+    lcd.print(map(axis1_y,0,1024,0,99));
     axis1_z = analogRead(AXIS1_Z_PIN);
-    lcd.setCursor(10,1);
-    //lcd.print(axis1_z);
+    lcd.setCursor(6,1);
+    lcd.print(map(axis1_z,0,1024,0,99));
+    axis1_x = analogRead(AXIS1_X_PIN);
+    lcd.setCursor(9, 1);
+    lcd.print(map(axis2_x,0,1024,0,99));
+    axis1_y = analogRead(AXIS1_Y_PIN);
+    lcd.setCursor(12,1);
+    lcd.print(map(axis2_y,0,1024,0,99));
+    axis1_z = analogRead(AXIS1_Z_PIN);
+    lcd.setCursor(15,1);
+    lcd.print(map(axis2_z,0,1024,0,99));
     x1.pop(removed);
     y1.pop(removed);
     z1.pop(removed);
@@ -180,47 +193,83 @@ void readAllAnalogPositions() {
 }
 
 void printStatusToSerial() {
-    Serial.print(average(&x1));Serial.print(',');
-    Serial.print(average(&y1));Serial.print(',');
-    //Serial.print(average(&z1));Serial.print(',');
-    Serial.print(average(&x2));Serial.print(',');
-    Serial.print(average(&y2));Serial.print(',');
-    //Serial.print(average(&z2));Serial.print(',');
-    Serial.print(b1);Serial.print(',');
-    Serial.print(b2);Serial.print(',');
-    Serial.print(b3);Serial.print(',');
-    Serial.print(b4);Serial.print(',');
-    Serial.print(analogRead(BATTERY_STATUS_PIN));Serial.print('\n');
+    if (DEBUG) {
+      Serial.print(average(&x1));Serial.print(',');
+      Serial.print(average(&y1));Serial.print(',');
+      Serial.print(average(&z1));Serial.print(',');
+      Serial.print(average(&x2));Serial.print(',');
+      Serial.print(average(&y2));Serial.print(',');
+      Serial.print(average(&z2));Serial.print(',');
+      Serial.print(b1);Serial.print(',');
+      Serial.print(b2);Serial.print(',');
+      Serial.print(b3);Serial.print(',');
+      Serial.print(b4);Serial.print(',');
+      Serial.print(analogRead(BATTERY_STATUS_PIN));Serial.print('\n');
+    }
 }
-
+void send() {
+    int toConvert = average(&x1);
+    byte firstByte = byte(toConvert >> 8);
+    byte secondByte = byte(toConvert & 0x00FF);
+    bool rslt;
+    dataToSend[0] = firstByte;
+    dataToSend[1] = secondByte;
+    toConvert = average(&y1);
+    firstByte = byte(toConvert >> 8);
+    secondByte = byte(toConvert & 0x00FF);
+    dataToSend[2] = firstByte;
+    dataToSend[3] = secondByte;
+    toConvert = average(&z1);
+    firstByte = byte(toConvert >> 8);
+    secondByte = byte(toConvert & 0x00FF);
+    dataToSend[4] = firstByte;
+    dataToSend[5] = secondByte;
+    toConvert = average(&x2);
+    firstByte = byte(toConvert >> 8);
+    secondByte = byte(toConvert & 0x00FF);
+    dataToSend[6] = firstByte;
+    dataToSend[7] = secondByte;
+    toConvert = average(&y2);
+    firstByte = byte(toConvert >> 8);
+    secondByte = byte(toConvert & 0x00FF);
+    dataToSend[8] = firstByte;
+    dataToSend[9] = secondByte;
+    toConvert = average(&z2);
+    firstByte = byte(toConvert >> 8);
+    secondByte = byte(toConvert & 0x00FF);
+    dataToSend[10] = firstByte;
+    dataToSend[11] = secondByte;
+    dataToSend[12] = b1;
+    dataToSend[13] = b2;
+    dataToSend[14] = b3;
+    dataToSend[15] = b4;
+    rslt = radio.write( &dataToSend, sizeof(dataToSend) );    
+}
 void loop(){
     lcd.setCursor(0,0);
-    lcd.print("RC-Remote");
-    
-    readAllAnalogPositions();            
-    switch (mode){
-    case MODE_24GHZ:
-      const char text[] = "Hello World";
-      //if (!radio.write(&text, sizeof(text))){
-      //  Serial.println("Send failed");             
-      //}
-      delay(250); 
-      break;
-    case MODE_BT:
-      char command = getCommand(axis1_y,axis2_x);
-      Serial.print(command);
-      Serial2.print(command);
-      delay(50);
-      break;    
-    default:
-      delay(250); 
-      break;
-    }
+    lcd.print("RC-Remote");    
+    readAllAnalogPositions();           
+    if (mode == MODE_BT){
+        char command = getCommand(axis2_x,axis1_y);
+        Serial.println(command);
+        Serial2.print(command);
+        delay(50);
+    } else if (mode == MODE_24GHZ){
+        send();
+        delay(50);       
+    } else {
+        Serial.print("DEFAULT");
+        delay(2000);               
+    }    
     printStatusToSerial();
        
 }
 
 void button1Pressed(){
+  if (millis() - lastButtonPressDetected < BUTTON_THRESHOLD){
+    return;
+  }
+  lastButtonPressDetected = millis();
   Serial.println("B1");
   switch (mode) {
   case MODE_SETUP:
@@ -230,8 +279,13 @@ void button1Pressed(){
     b1 = (b1 == 0 ? 1 : 0);
     break;
   }
+  delay(50);
 }
 void button2Pressed(){
+  if (millis() - lastButtonPressDetected < BUTTON_THRESHOLD){
+    return;
+  }
+  lastButtonPressDetected = millis();
   Serial.println("B2");
   switch (mode){
   case MODE_SETUP:
@@ -241,12 +295,22 @@ void button2Pressed(){
     b2 = (b2 == 0 ? 1 : 0);
     break;
   }
+  delay(50);
 }
 void button3Pressed(){
+  if (millis() - lastButtonPressDetected < BUTTON_THRESHOLD){
+    return;
+  }
+  lastButtonPressDetected = millis();
     Serial.println("B3");
     b3 = (b3 == 0 ? 1 : 0);
+    delay(50);
 }
 void button4Pressed(){
+  if (millis() - lastButtonPressDetected < BUTTON_THRESHOLD){
+    return;
+  }
+  lastButtonPressDetected = millis();
   Serial.println("B4");
   Serial.println(mode);
   switch (mode) {
@@ -261,4 +325,5 @@ void button4Pressed(){
     b4 = (b4 == 0 ? 1 : 0);
     break;
   }
+  delay(50);
 }
