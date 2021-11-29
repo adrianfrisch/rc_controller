@@ -13,6 +13,8 @@
 // Converting the battery reading 
 #define VOLTAGE_SLOPE 0.0098484848
 #define VOLTAGE_OFFSET -0.21
+#define VOLTAGE_FULL 8.4
+#define VOLTAGE_EMPTY 7.2
 
 // Pins for the potis of the 2 joysticks
 #define AXIS1_X_PIN A4
@@ -198,6 +200,10 @@ void readAllAnalogPositions() {
     y2.push(axis2_y);
     z2.push(axis2_z);
     batteryVoltage = analogRead(BATTERY_STATUS_PIN)*VOLTAGE_SLOPE+VOLTAGE_OFFSET;
+    byte batteryPercent = byte((batteryVoltage - VOLTAGE_EMPTY)/(VOLTAGE_FULL-VOLTAGE_EMPTY));
+    lcd.setCursor(0, 8);
+    lcd.print(batteryPercent);
+    
 }
 void printStatusToSerial() {
     if (DEBUG) {
@@ -254,7 +260,7 @@ void send() {
 }
 void loop(){
     lcd.setCursor(0,0);
-    lcd.print("RC-Remote");    
+    lcd.print("RC");    
     readAllAnalogPositions();           
     if (mode == MODE_BT){
         char command = getCommand(axis2_x,axis1_y);
