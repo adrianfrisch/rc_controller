@@ -6,9 +6,13 @@
 // Keep in Mind: Bluetooth modules need pairing before they send / receive data.
 #include <ArduinoBlue.h>
 
+// Flag to toggle logging all data to the serial monitor
 #define DEBUG false
 // Pin for battery monitoring
 #define BATTERY_STATUS_PIN A0
+// Converting the battery reading 
+#define VOLTAGE_SLOPE 0.0098484848
+#define VOLTAGE_OFFSET -0.21
 
 // Pins for the potis of the 2 joysticks
 #define AXIS1_X_PIN A4
@@ -48,7 +52,11 @@
 // Size of the ringbuffer which will be used for a running average to smooth out
 // the jittering of the joystick knobs. 
 #define BUFFER_SIZE 3
- 
+
+#define MODE_SETUP 0
+#define MODE_BT 1
+#define MODE_24GHZ 2
+
 int axis1_x;
 RingBuf<int,BUFFER_SIZE> x1;
 int axis1_y;
@@ -71,16 +79,15 @@ byte b2 = 0;
 byte b3 = 0;
 byte b4 = 0;
 
+// current battery status 
+float batteryVoltage = 0;
+
 // Using 8 PIN Mode since faster
 LiquidCrystal lcd(LCD_RS, LCD_ENABLE, LCD_D0, LCD_D1, LCD_D2, LCD_D3, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
 RF24 radio(NRF_CE,NRF_CSN);
 const byte address[5] = {'0','0','0','0','1'};
 byte dataToSend[16];
-
-#define MODE_SETUP 0
-#define MODE_BT 1
-#define MODE_24GHZ 2
 
 int mode = MODE_SETUP;
 int cursorPosition = 0;
@@ -190,8 +197,8 @@ void readAllAnalogPositions() {
     x2.push(axis2_x);
     y2.push(axis2_y);
     z2.push(axis2_z);
+    batteryVoltage = analogRead(BATTERY_STATUS_PIN)*VOLTAGE_SLOPE+VOLTAGE_OFFSET;
 }
-
 void printStatusToSerial() {
     if (DEBUG) {
       Serial.print(average(&x1));Serial.print(',');
@@ -204,7 +211,7 @@ void printStatusToSerial() {
       Serial.print(b2);Serial.print(',');
       Serial.print(b3);Serial.print(',');
       Serial.print(b4);Serial.print(',');
-      Serial.print(analogRead(BATTERY_STATUS_PIN));Serial.print('\n');
+      Serial.print(batteryVoltage);Serial.print('\n');      
     }
 }
 void send() {
@@ -259,7 +266,7 @@ void loop(){
         delay(50);       
     } else {
         Serial.print("DEFAULT");
-        delay(2000);               
+        delay(50);               
     }    
     printStatusToSerial();
        
