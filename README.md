@@ -65,9 +65,9 @@ This list contains all of the used components to put everything together
 - CA glue
 - heat shrink tube
 ## Test results
-Work in progress. Not tested yet :)
+It is still work in progress. First successful data transmitted but lots of work remaining.
 ## Identified problems
-Work in progress. Not tested yet :)
+It is still work in progress. First successful data transmitted but lots of work remaining.
 ## Future ideas
 - The backplate of the LCD display mount needs to be glued at the moment. Add proper lid with screws.
 - Calibration on power up as a "third mode selection" to allow recalib and eliminate need for 
